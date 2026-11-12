@@ -23,15 +23,15 @@ export default {
   render(root, ctx) {
     const { live, store } = ctx;
     let tab = ctx.params.get('tab') || 'all';
-    let q = '';
-    let range = rangeOf(['pending', 'preparing', 'ready', 'verify'].includes(tab) ? 'week' : 'today');
-    let rangeName = ['pending', 'preparing', 'ready', 'verify'].includes(tab) ? 'week' : 'today';
+    let q = ctx.params.get('q') || '';
+    let rangeName = q ? 'month' : ['pending', 'preparing', 'ready', 'verify'].includes(tab) ? 'week' : 'today';
+    let range = rangeOf(rangeName);
     let extra = null; // orders fetched for ranges older than the live window
 
     root.innerHTML = `
       ${pageHead('Orders', 'Every order from POS, table QR and online takeaway — updated in real time.', `<button class="btn btn-outline" data-export>${icon('download', 18)} Export CSV</button>`)}
       <div class="row between wrap mb">${rangeControl(rangeName)}
-        <div class="input-icon" style="min-width:240px">${icon('search', 18)}<input class="input" placeholder="Order no, customer, phone, table" data-q></div></div>
+        <div class="input-icon" style="min-width:240px">${icon('search', 18)}<input class="input" placeholder="Order no, customer, phone, table" data-q value="${q.replace(/"/g, '&quot;')}"></div></div>
       <div class="tabs mb" data-tabs></div>
       <div data-list></div>`;
     const $ = (s) => root.querySelector(s);

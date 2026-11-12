@@ -13,6 +13,10 @@ import { SUGGESTIONS, openAssistant } from '../assistant.js';
 import { generateDemoOrders } from '../demo.js';
 
 const fmtRM = (v) => money(v);
+const greeting = () => {
+  const h = new Date().getHours();
+  return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+};
 
 export default {
   render(root, ctx) {
@@ -24,7 +28,8 @@ export default {
     root.innerHTML = `
     <div class="overview">
       <div class="ov-main">
-        <div class="store-title"><h1 data-store-name>${esc(live.settings.name)}</h1>
+        <div class="store-title row between wrap"><div><h1>${greeting()}, ${esc(ctx.user.name.split(' ')[0])} 👋</h1>
+          <p>Here's what's happening at <b data-store-name>${esc(live.settings.name)}</b> today.</p></div>
           <span class="plan-pill">${esc(ROLES[ctx.role].label)} · ${store.mode === 'demo' ? 'Demo Mode' : 'Cloud'}</span></div>
         <div data-demo-banner></div>
         <div class="ov-head">

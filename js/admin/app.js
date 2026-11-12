@@ -2,26 +2,26 @@
 import { initStore, store, withDefaults, seedCloudDefaults } from '../core/store.js';
 import { isCloudMode, APP } from '../core/config.js';
 import { icon } from '../core/icons.js';
-import { esc, initials } from '../core/utils.js';
+import { esc, initials, timeAgo } from '../core/utils.js';
 import { toast, chime, openModal } from '../core/ui.js';
 import { canAccess, homeFor, ROLES, can } from '../core/permissions.js';
 import { DEMO_STAFF } from '../core/seed.js';
-import { orderTypeLabel } from '../core/orders.js';
+import { orderTypeLabel, storeOpenNow } from '../core/orders.js';
 
 export const PAGES = [
-  { id: 'overview', label: 'Overview', icon: 'layout-dashboard', load: () => import('./pages/overview.js') },
-  { id: 'pos', label: 'POS / Cashier', short: 'POS', icon: 'calculator', load: () => import('./pages/pos.js') },
-  { id: 'tables', label: 'Tables', icon: 'armchair', load: () => import('./pages/tables.js') },
-  { id: 'qr', label: 'QR Ordering', short: 'QR', icon: 'qr-code', load: () => import('./pages/qr.js') },
-  { id: 'takeaway', label: 'Takeaway', icon: 'shopping-bag', load: () => import('./pages/takeaway.js') },
-  { id: 'orders', label: 'Orders', icon: 'clipboard-list', load: () => import('./pages/orders.js') },
-  { id: 'kitchen', label: 'Kitchen Display', short: 'Kitchen', icon: 'chef-hat', load: () => import('./pages/kitchen.js') },
-  { id: 'products', label: 'Products & Menu', short: 'Menu', icon: 'coffee', load: () => import('./pages/products.js') },
-  { id: 'inventory', label: 'Inventory', icon: 'package', load: () => import('./pages/inventory.js') },
-  { id: 'customers', label: 'Customers', icon: 'users', load: () => import('./pages/customers.js') },
-  { id: 'reports', label: 'Reports', icon: 'chart-column', load: () => import('./pages/reports.js') },
-  { id: 'staff', label: 'Staff', icon: 'user-cog', load: () => import('./pages/staff.js') },
-  { id: 'settings', label: 'Settings', icon: 'settings', load: () => import('./pages/settings.js') },
+  { id: 'overview', group: 'Sales', label: 'Overview', icon: 'layout-dashboard', load: () => import('./pages/overview.js') },
+  { id: 'pos', group: 'Sales', label: 'POS / Cashier', short: 'POS', icon: 'calculator', load: () => import('./pages/pos.js') },
+  { id: 'tables', group: 'Sales', label: 'Tables', icon: 'armchair', load: () => import('./pages/tables.js') },
+  { id: 'qr', group: 'Sales', label: 'QR Ordering', short: 'QR', icon: 'qr-code', load: () => import('./pages/qr.js') },
+  { id: 'takeaway', group: 'Sales', label: 'Takeaway', icon: 'shopping-bag', load: () => import('./pages/takeaway.js') },
+  { id: 'orders', group: 'Operations', label: 'Orders', icon: 'clipboard-list', load: () => import('./pages/orders.js') },
+  { id: 'kitchen', group: 'Operations', label: 'Kitchen Display', short: 'Kitchen', icon: 'chef-hat', load: () => import('./pages/kitchen.js') },
+  { id: 'products', group: 'Operations', label: 'Products & Menu', short: 'Menu', icon: 'coffee', load: () => import('./pages/products.js') },
+  { id: 'inventory', group: 'Operations', label: 'Inventory', icon: 'package', load: () => import('./pages/inventory.js') },
+  { id: 'customers', group: 'Operations', label: 'Customers', icon: 'users', load: () => import('./pages/customers.js') },
+  { id: 'reports', group: 'Business', label: 'Reports', icon: 'chart-column', load: () => import('./pages/reports.js') },
+  { id: 'staff', group: 'Business', label: 'Staff', icon: 'user-cog', load: () => import('./pages/staff.js') },
+  { id: 'settings', group: 'Business', label: 'Settings', icon: 'settings', load: () => import('./pages/settings.js') },
 ];
 
 const app = document.getElementById('app');
@@ -303,26 +303,45 @@ function navItems() {
 
 function renderShell() {
   const items = navItems();
-  const collapsed = localStorage.getItem('tapjerr:sidebar') === 'collapsed';
+  const pref = localStorage.getItem('tapjerr:sidebar');
+  const collapsed = pref ? pref === 'collapsed' : window.innerWidth < 1280;
   const primary = items.filter((p) => ['overview', 'pos', 'orders', 'kitchen', 'tables'].includes(p.id)).slice(0, 4);
+  const groups = [...new Set(items.map((p) => p.group))];
   app.innerHTML = `
   <div class="shell ${collapsed ? 'collapsed' : ''}">
     <aside class="sidebar" aria-label="Main navigation">
       <div class="sb-brand">
-        <a href="#/${homeFor(profile.role)}" class="sb-logo" title="TAPJERR.io">${icon('tapjerr', 30)}</a>
-        <button class="sb-toggle" title="Collapse sidebar" aria-label="Toggle sidebar">${icon('panel-left', 18)}</button>
+        <a href="#/${homeFor(profile.role)}" class="sb-logo" title="TAPJERR.io"><span class="sb-mark">${icon('tapjerr', 22)}</span><span class="sb-word">TAPJERR<b>.io</b></span></a>
       </div>
+      <a class="sb-store" href="#/${canAccess(profile.role, 'settings') ? 'settings' : homeFor(profile.role)}" title="${esc(live.settings.name)}">
+        <span class="sb-store-logo" data-store-logo>${esc((live.settings.name || 'S')[0])}</span>
+        <span class="sb-store-txt"><b data-store-name>${esc(live.settings.name)}</b><small>${store.mode === 'demo' ? 'Demo Mode' : 'Cloud POS'}</small></span>
+      </a>
       <nav class="sb-nav">
-        ${items.map((p) => `<a href="#/${p.id}" class="sb-item" data-page="${p.id}" title="${esc(p.label)}">${icon(p.icon, 22)}<span>${esc(p.short || p.label)}</span><i class="sb-badge" data-badge="${p.id}"></i></a>`).join('')}
+        ${groups
+          .map(
+            (g) => `<div class="sb-group"><span class="sb-label">${esc(g)}</span>${items
+              .filter((p) => p.group === g)
+              .map((p) => `<a href="#/${p.id}" class="sb-item" data-page="${p.id}" title="${esc(p.label)}">${icon(p.icon, 20)}<span>${esc(p.label)}</span><i class="sb-badge" data-badge="${p.id}"></i></a>`)
+              .join('')}</div>`
+          )
+          .join('')}
       </nav>
       <div class="sb-foot">
-        ${store.mode === 'demo' ? `<span class="sb-mode" title="Demo Mode: data is stored in this browser. Add Firebase config in js/core/config.js for multi-device sync.">${icon('flask-conical', 14)}<span>Demo</span></span>` : ''}
-        <button class="sb-user" data-user title="${esc(profile.name)}">
-          <span class="avatar">${esc(initials(profile.name))}</span>
-        </button>
+        <button class="sb-toggle" aria-label="Toggle sidebar">${icon('panel-left', 18)}<span>Collapse</span></button>
       </div>
     </aside>
     <main class="main" id="main">
+      <header class="topbar no-print">
+        <div class="tb-title"><span class="tb-icon" data-tb-icon></span><div><small data-store-name>${esc(live.settings.name)}</small><b data-tb-title></b></div></div>
+        <form class="tb-search" data-search role="search"><span>${icon('search', 18)}</span><input name="q" placeholder="Search order no, customer, phone…" autocomplete="off"><kbd>/</kbd></form>
+        <div class="tb-actions">
+          <a class="tb-status" data-tb-status href="#/${canAccess(profile.role, 'settings') ? 'settings?tab=hours' : homeFor(profile.role)}"></a>
+          ${canAccess(profile.role, 'pos') ? `<a class="btn btn-primary btn-sm tb-new" href="#/pos">${icon('plus', 16)}<span>New Sale</span></a>` : ''}
+          <button class="tb-btn" data-bell aria-label="Notifications">${icon('bell', 20)}<i class="tb-dot" data-bell-count></i></button>
+          <button class="tb-user" data-user><span class="avatar">${esc(initials(profile.name))}</span><span class="tb-user-txt"><b>${esc(profile.name)}</b><small>${esc(ROLES[profile.role]?.label || '')}</small></span>${icon('chevron-down', 16)}</button>
+        </div>
+      </header>
       <div id="page"></div>
     </main>
     <nav class="bottom-nav" aria-label="Quick navigation">
@@ -337,12 +356,71 @@ function renderShell() {
   };
   app.querySelector('[data-user]').onclick = userMenu;
   app.querySelector('[data-more]').onclick = moreMenu;
+  app.querySelector('[data-bell]').onclick = notificationsPanel;
+  const search = app.querySelector('[data-search]');
+  search.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const q = search.q.value.trim();
+    if (!q) return;
+    navigate('orders', { tab: 'all', q });
+    search.q.blur();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName || '') && !document.querySelector('.modal-backdrop')) {
+      e.preventDefault();
+      search.q.focus();
+    }
+  });
   live.on('orders', updateBadges);
   live.on('inventory', updateBadges);
+  live.on('settings', updateTopbar);
   if ('Notification' in window && Notification.permission === 'default') {
     document.addEventListener('click', () => Notification.requestPermission().catch(() => {}), { once: true });
   }
   route();
+}
+
+function notifications() {
+  const list = [];
+  live.orders.filter((o) => o.status === 'new').slice(0, 6).forEach((o) => list.push({ ic: 'bell-ring', tone: 'tone-blue', title: `New order ${o.orderNo}`, sub: `${orderTypeLabel(o)} · ${timeAgo(o.createdAt)}`, order: o.id }));
+  live.orders.filter((o) => o.paymentStatus === 'pending_verification').slice(0, 5).forEach((o) => list.push({ ic: 'badge-alert', tone: 'tone-amber', title: `Verify payment ${o.orderNo}`, sub: `RM ${o.total.toFixed(2)} · ref ${o.paymentRef || '—'}`, order: o.id }));
+  live.orders.filter((o) => o.status === 'ready').slice(0, 4).forEach((o) => list.push({ ic: 'bell', tone: 'tone-green', title: `Ready: ${o.orderNo}`, sub: orderTypeLabel(o), order: o.id }));
+  live.inventory.filter((i) => i.stock <= i.lowAt).slice(0, 4).forEach((i) => list.push({ ic: 'package', tone: 'tone-red', title: `Low stock: ${i.name}`, sub: `${i.stock} ${i.unit} left`, href: '#/inventory' }));
+  return list;
+}
+
+function notificationsPanel() {
+  const list = notifications();
+  const { el, close } = openModal({
+    title: 'Notifications',
+    size: 'sm',
+    body: list.length
+      ? `<div class="notif-list">${list.map((n, i) => `<button class="notif" data-n="${i}"><span class="mini-icon ${n.tone}">${icon(n.ic, 18)}</span><div class="grow"><strong>${esc(n.title)}</strong><span>${esc(n.sub)}</span></div>${icon('chevron-right', 16)}</button>`).join('')}</div>`
+      : `<div class="empty"><div class="empty-art">${icon('bell', 36)}</div><h4>You're all caught up</h4><p>New orders, payments and stock alerts appear here.</p></div>`,
+  });
+  el.querySelectorAll('[data-n]').forEach((b) =>
+    b.addEventListener('click', async () => {
+      const n = list[Number(b.dataset.n)];
+      close();
+      if (n.order) {
+        const { openOrderDetail } = await import('./common.js');
+        openOrderDetail(n.order, { user: profile, role: profile.role, live, navigate, can: (a) => can(profile.role, a), store });
+      } else if (n.href) location.hash = n.href;
+    })
+  );
+}
+
+function updateTopbar() {
+  const s = live.settings;
+  const st = document.querySelector('[data-tb-status]');
+  if (st) {
+    const open = storeOpenNow(s);
+    st.className = `tb-status ${open ? 'open' : ''}`;
+    st.innerHTML = `<i></i><span>${open ? 'Store open' : 'Store closed'}</span>`;
+  }
+  document.querySelectorAll('[data-store-name]').forEach((n) => (n.textContent = s.name));
+  const logo = document.querySelector('[data-store-logo]');
+  if (logo) logo.innerHTML = s.logo ? `<img src="${esc(s.logo)}" alt="">` : esc((s.name || 'S')[0]);
 }
 
 function updateBadges() {
@@ -357,6 +435,12 @@ function updateBadges() {
     b.textContent = n > 99 ? '99+' : n || '';
     b.classList.toggle('show', n > 0);
   });
+  const bell = document.querySelector('[data-bell-count]');
+  if (bell) {
+    const n = notifications().length;
+    bell.textContent = n > 9 ? '9+' : n || '';
+    bell.classList.toggle('show', n > 0);
+  }
 }
 
 function userMenu() {
@@ -418,6 +502,13 @@ async function route() {
     params = new URLSearchParams();
   }
   document.querySelectorAll('[data-page]').forEach((a) => a.classList.toggle('active', a.dataset.page === page));
+  const pdef = PAGES.find((p) => p.id === page);
+  const tbt = document.querySelector('[data-tb-title]');
+  if (tbt) tbt.textContent = pdef.label;
+  const tbi = document.querySelector('[data-tb-icon]');
+  if (tbi) tbi.innerHTML = icon(pdef.icon, 20);
+  document.querySelector('.shell')?.classList.toggle('kds-mode', page === 'kitchen');
+  updateTopbar();
   const root = document.getElementById('page');
   if (!root) return;
   const samePage = currentPage === page;

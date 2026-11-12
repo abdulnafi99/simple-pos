@@ -1,6 +1,6 @@
 /* TAPJERR.io — design tokens & shared components */
 :root {
-  --bg: #f3f4f8;
+  --bg: #f5f6fa;
   --surface: #ffffff;
   --surface-2: #f7f8fb;
   --navy: #0a0f5c;
@@ -23,14 +23,14 @@
   --text-2: #3e4259;
   --muted: #6b7088;
   --faint: #9aa0b6;
-  --border: #e5e7f0;
+  --border: #e8eaf1;
   --border-2: #d6d9e6;
   --track: #eceef6;
   --radius: 16px;
   --radius-sm: 10px;
-  --radius-lg: 22px;
+  --radius-lg: 18px;
   --shadow-sm: 0 1px 2px rgba(16, 24, 64, 0.05);
-  --shadow: 0 4px 18px rgba(20, 30, 90, 0.06), 0 1px 3px rgba(20, 30, 90, 0.04);
+  --shadow: 0 1px 2px rgba(16, 24, 64, 0.04), 0 2px 8px rgba(16, 24, 64, 0.04);
   --shadow-lg: 0 18px 50px rgba(15, 22, 80, 0.18);
   --font: 'Inter', 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -193,9 +193,9 @@ svg.lucide {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 44px;
-  padding: 0 18px;
-  border-radius: 12px;
+  height: 42px;
+  padding: 0 16px;
+  border-radius: 10px;
   border: 1px solid transparent;
   background: var(--surface-2);
   color: var(--text);
@@ -360,9 +360,9 @@ svg.lucide {
 .select,
 .textarea {
   width: 100%;
-  height: 44px;
+  height: 42px;
   padding: 0 14px;
-  border-radius: 11px;
+  border-radius: 10px;
   border: 1px solid var(--border-2);
   background: var(--surface);
   transition: border-color 0.15s, box-shadow 0.15s;
@@ -471,9 +471,9 @@ svg.lucide {
 .card {
   background: var(--surface);
   border-radius: var(--radius-lg);
-  padding: 22px;
+  padding: 20px;
   box-shadow: var(--shadow);
-  border: 1px solid rgba(229, 231, 240, 0.6);
+  border: 1px solid var(--border);
   min-width: 0;
 }
 .card.flat {
@@ -485,7 +485,8 @@ svg.lucide {
 }
 .card.hover:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(20, 30, 90, 0.1);
+  border-color: var(--primary-100);
+  box-shadow: 0 10px 24px -8px rgba(20, 30, 90, 0.14);
 }
 .card-head {
   display: flex;
@@ -557,9 +558,9 @@ svg.lucide {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 38px;
-  padding: 0 16px;
-  border-radius: 99px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--surface);
   font-weight: 550;
@@ -576,6 +577,7 @@ svg.lucide {
   background: var(--primary);
   color: #fff;
   border-color: var(--primary);
+  box-shadow: 0 4px 12px -4px rgba(20, 42, 156, 0.5);
 }
 .chip .count {
   font-size: 12px;
@@ -645,7 +647,7 @@ svg.lucide {
   display: inline-flex;
   background: var(--surface-2);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 11px;
   padding: 3px;
   gap: 2px;
 }
@@ -687,7 +689,7 @@ table.data th {
   padding: 10px 14px;
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
-  background: var(--surface);
+  background: var(--surface-2);
   position: sticky;
   top: 0;
 }
@@ -1011,7 +1013,8 @@ table.data th.num {
   text-align: center;
 }
 .donut-center strong {
-  font-size: 18px;
+  font-size: 15px;
+  letter-spacing: -0.01em;
 }
 .donut-center span {
   font-size: 11.5px;
@@ -1029,11 +1032,19 @@ table.data th.num {
 }
 .legend li {
   display: grid;
-  grid-template-columns: 12px 1fr auto 40px;
+  grid-template-columns: 12px minmax(0, 1fr) auto 40px;
   gap: 10px;
   align-items: center;
   font-size: 13.5px;
   transition: opacity 0.15s;
+}
+.legend li > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.legend b {
+  white-space: nowrap;
 }
 .legend i {
   width: 12px;
