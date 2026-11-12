@@ -1,0 +1,20 @@
+rules_version = '2';
+
+// TAPJERR.io — Firebase Storage rules: public image reads, admin-only uploads.
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isMgmt() {
+      return request.auth != null
+        && firestore.exists(/databases/(default)/documents/staff/$(request.auth.uid))
+        && firestore.get(/databases/(default)/documents/staff/$(request.auth.uid)).data.role in ['super_admin', 'admin']
+        && firestore.get(/databases/(default)/documents/staff/$(request.auth.uid)).data.active == true;
+    }
+    match /{folder}/{file} {
+      allow read: if folder in ['products', 'branding', 'payments'];
+      allow write: if folder in ['products', 'branding', 'payments'] && isMgmt()
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow delete: if isMgmt();
+    }
+  }
+}

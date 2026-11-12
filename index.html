@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>TAPJERR.io — Selagi Coffee</title>
+    <meta name="description" content="TAPJERR.io — cloud POS and QR ordering for Selagi Coffee. Smart Ordering. Seamless Business." />
+    <meta name="theme-color" content="#0a0f5c" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="assets/icon-192.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/base.css" />
+    <style>
+      body { background: var(--navy); color: #fff; }
+      .land { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: 32px 16px;
+        background: radial-gradient(900px 500px at 0% 0%, #2a3bd1 0%, transparent 55%), radial-gradient(700px 400px at 100% 100%, #1d8a52 0%, transparent 50%), var(--navy); text-align: center; }
+      .land h1 { font-size: clamp(34px, 6vw, 56px); font-weight: 800; letter-spacing: -0.03em; }
+      .land h1 span { color: #7ee08a; }
+      .land p { opacity: 0.8; max-width: 520px; font-size: 17px; }
+      .choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; width: min(760px, 100%); }
+      .choice { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; text-align: left; padding: 22px; border-radius: 22px; background: rgba(255,255,255,0.07);
+        border: 1px solid rgba(255,255,255,0.12); color: #fff; transition: transform 0.2s var(--ease), background 0.2s; }
+      .choice:hover { transform: translateY(-3px); background: rgba(255,255,255,0.12); }
+      .choice .ic { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; background: #6cd06c; color: var(--navy); }
+      .choice b { font-size: 18px; } .choice small { opacity: 0.75; font-size: 14px; }
+    </style>
+  </head>
+  <body>
+    <main class="land">
+      <div class="row" style="gap: 12px"><div class="brandmark">T</div><strong style="font-size: 22px">TAPJERR<span style="color: #7ee08a">.io</span></strong></div>
+      <div><h1>Smart Ordering.<br /><span>Seamless Business.</span></h1><p class="mt">The all-in-one cafe platform for <b>Selagi Coffee</b> — POS, table QR ordering, takeaway, kitchen display and analytics.</p></div>
+      <div class="choices">
+        <a class="choice" href="order.html?mode=takeaway"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span><b>Order now</b><small>Takeaway or dine-in. No account needed.</small></a>
+        <a class="choice" href="admin.html"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg></span><b>Staff dashboard</b><small>Admin, cashier & POS sign in.</small></a>
+        <a class="choice" href="kitchen.html"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21a1 1 0 0 0 1-1v-5.35c0-.457.316-.844.727-1.041a4 4 0 0 0-2.134-7.589 5 5 0 0 0-9.186 0 4 4 0 0 0-2.134 7.588c.411.198.727.585.727 1.041V20a1 1 0 0 0 1 1Z"/><path d="M6 17h12"/></svg></span><b>Kitchen display</b><small>Tablet-optimised order screen.</small></a>
+      </div>
+      <span class="tiny" style="opacity: 0.5">© Selagi Coffee · Powered by TAPJERR.io</span>
+    </main>
+  </body>
+</html>

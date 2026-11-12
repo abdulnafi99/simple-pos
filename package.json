@@ -1,0 +1,11 @@
+{
+  "name": "tapjerr-pos",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TAPJERR.io — cloud POS & QR ordering for Selagi Coffee (vanilla HTML/CSS/JS + Firebase)",
+  "scripts": {
+    "start": "node serve.js 8080",
+    "deploy": "firebase deploy"
+  },
+  "license": "UNLICENSED"
+}

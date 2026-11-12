@@ -1,0 +1,104 @@
+rules_version = '2';
+
+// TAPJERR.io — Firestore security rules (role-based access control).
+// BEFORE DEPLOYING: replace owner@selagi.coffee below with the store owner's
+// Firebase Auth email. That account becomes the first Super Admin on first login.
+service cloud.firestore {
+  match /databases/{db}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function staffPath() { return /databases/$(db)/documents/staff/$(request.auth.uid); }
+    function isStaff() { return signedIn() && exists(staffPath()) && get(staffPath()).data.active == true; }
+    function role() { return get(staffPath()).data.role; }
+    function hasRole(roles) { return isStaff() && role() in roles; }
+    function isMgmt() { return hasRole(['super_admin', 'admin']); }
+    function isFront() { return hasRole(['super_admin', 'admin', 'cashier']); }
+    function onlyChanges(keys) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys); }
+    function nowMs() { return request.time.toMillis(); }
+
+    // Anonymous customer order (table QR / online takeaway). Cannot self-mark as paid.
+    function validCustomerOrder() {
+      let d = request.resource.data;
+      return d.source in ['qr', 'online']
+        && d.type in ['dine-in', 'takeaway']
+        && d.status == 'new'
+        && d.paymentStatus in ['unpaid', 'pending_verification']
+        && d.items is list && d.items.size() > 0 && d.items.size() <= 50
+        && d.total is number && d.total >= 0 && d.total < 10000
+        && d.cashierId == '' && d.inventoryDeducted == false
+        && !('demo' in d) && !('paidAt' in d)
+        && d.createdAt is number && d.createdAt > nowMs() - 300000 && d.createdAt < nowMs() + 60000
+        && (d.source != 'online' || (d.customer.name is string && d.customer.name.size() > 0 && d.customer.phone.size() >= 9));
+    }
+
+    // ---------- Public catalogue (customers can read without an account) ----------
+    match /settings/{id}   { allow read: if true; allow write: if isMgmt(); }
+    match /categories/{id} { allow read: if true; allow write: if isMgmt(); }
+    match /products/{id}   { allow read: if true; allow write: if isMgmt(); }
+    match /tables/{id} {
+      allow read: if true;
+      allow create, delete: if isMgmt();
+      allow update: if isMgmt() || (isFront() && onlyChanges(['status', 'guests', 'reservedFor', 'note']));
+    }
+
+    // ---------- Orders ----------
+    match /orders/{orderId} {
+      allow get, list: if isStaff();
+      allow create: if isFront() || validCustomerOrder();
+      allow update: if isFront()
+        || (hasRole(['kitchen'])
+            && onlyChanges(['status', 'statusHistory', 'updatedAt'])
+            && request.resource.data.status in ['new', 'confirmed', 'preparing', 'ready']);
+      allow delete: if isMgmt();
+    }
+
+    // PII-free public mirror used for tracking by order number.
+    match /orderStatus/{orderNo} {
+      allow get: if true;
+      allow list: if isStaff();
+      allow create: if isStaff()
+        || (request.resource.data.orderNo == orderNo
+            && request.resource.data.status == 'new'
+            && request.resource.data.paymentStatus in ['unpaid', 'pending_verification']);
+      allow update: if isStaff();
+      allow delete: if isMgmt();
+    }
+
+    // Daily order-number counters: may only ever increase by one.
+    match /counters/{id} {
+      allow get: if true;
+      allow create: if request.resource.data.keys().hasOnly(['n']) && request.resource.data.n == 1;
+      allow update: if request.resource.data.keys().hasOnly(['n']) && request.resource.data.n == resource.data.n + 1;
+    }
+
+    // ---------- Back office ----------
+    match /customers/{id} { allow read, write: if isFront(); }
+    match /inventory/{id} {
+      allow read: if isStaff();
+      allow write: if isMgmt();
+      // Automatic recipe deduction when any front-of-house staff completes an order.
+      allow update: if isFront() && onlyChanges(['stock']);
+    }
+    match /stockMoves/{id} {
+      allow read: if isMgmt();
+      allow create: if isMgmt() || (isFront() && request.resource.data.type == 'sale');
+      allow update, delete: if false; // immutable audit trail
+    }
+    match /suppliers/{id} { allow read, write: if isMgmt(); }
+
+    // ---------- Staff & roles ----------
+    match /staff/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || isStaff());
+      allow list: if isMgmt();
+      allow create: if (isMgmt() && (role() == 'super_admin' || request.resource.data.role != 'super_admin'))
+        || (request.auth.uid == uid
+            && request.auth.token.email == 'owner@selagi.coffee'
+            && request.resource.data.role == 'super_admin');
+      allow update: if isMgmt() && uid != request.auth.uid
+        && (role() == 'super_admin' || (resource.data.role != 'super_admin' && request.resource.data.role != 'super_admin'));
+      allow delete: if hasRole(['super_admin']) && uid != request.auth.uid;
+    }
+
+    match /{document=**} { allow read, write: if false; }
+  }
+}
